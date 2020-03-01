@@ -1,5 +1,6 @@
 'use strict'
 
+const cors = require('cors')
 const authRoutes = require('./auth/auth.routes')
 const express = require('express')
 const properties = require('./config/properties')
@@ -18,7 +19,7 @@ const bodyParserURLEncoded = bodyParser.urlencoded({ extended: true })
 app.use(bodyParserJSON)
 app.use(bodyParserURLEncoded)
 
-
+app.use(cors())
 app.use('/api', router)
 authRoutes(router)
 
