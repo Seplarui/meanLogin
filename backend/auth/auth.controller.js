@@ -7,18 +7,25 @@ exports.createUser = (req, res, next) => {
     const newUser = {
         name: req.body.name,
         email: req.body.email,
-        password: req.body.password
+        password: bcrypt.hashSync(req.body.password)
     }
     User.create(newUser, (err, user) => {
+        if (err && err.code === 11000) return res.status(409).send('Email already existes')
         if (err) return res.status(500).send('Server error')
         const expiresIn = 24 * 60 * 60
         const accessToken = jwt.sign({ id: user.id },
             SECRET_KEY, {
             expiresIn: expiresIn
         })
+        const dataUser = {
+            name: user.name,
+            email: user.email,
+            accessToken: accessToken,
+            expiresIn: expiresIn
+        }
 
         //response hacia el frontend
-        res.send({ user })
+        res.send({ dataUser })
 
     })
 }
@@ -36,13 +43,19 @@ exports.loginUser = (req, res, next) => {
             //email does not exists
             res.status(409).send({ message: 'Something is wrong' })
         } else {
-            const resultPassword = userData.password
+            const resultPassword = bcrypt.compareSync(userData.password, user.password)
             if (resultPassword) {
                 const expiresIn = 24 * 60 * 60
+                const dataUser = {
+                    name: user.name,
+                    email: user.email,
+                    accessToken: accessToken,
+                    expiresIn: expiresIn
+                }
                 const accessToken = jwt.sign({ id: user.id }, SECRET_KEY, {
                     expiresIn: expiresIn
                 })
-                res.send({ userData })
+                res.send({ dataUser })
             } else {
                 //password wrong
                 res.status(409).send({ message: 'Something is wrong' })
